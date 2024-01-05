@@ -5,6 +5,9 @@ export interface UserDto {
   email: string
   phoneNumber: string
   createdDate: Date
+  profile: {
+    avatarColor: string
+  }
 }
 
 export interface PrepItemDto {

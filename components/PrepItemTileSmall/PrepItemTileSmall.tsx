@@ -1,19 +1,22 @@
 "use client"
 import { RxAvatar, RxPlusCircled } from "react-icons/rx"
 import { SpawnPrepTaskDto } from "../../app/api/prepItems/[id]/spawnPrepTask/route"
-import { PrepItemDto, PrepTaskDto } from "../../mocks/mocks.interfaces"
+import { PrepItemDto, PrepTaskDto, UserDto } from "../../mocks/mocks.interfaces"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
+import { UsersListPopover } from "../UsersListPopover/UsersListPopover"
 
 interface PrepItemTileSmallProps {
+  users: UserDto[]
   prepItem: PrepItemDto
   prepTask?: PrepTaskDto
   userid: string
   handlers: {
     spawnPrepTask: (dto: SpawnPrepTaskDto) => Promise<void>
+    assignPrepTask: (prepTaskId: string, assignedToId: string) => Promise<void>
   }
 }
 
-export function PrepItemTileSmall({ prepItem, prepTask, userid, handlers }: PrepItemTileSmallProps) {
+export function PrepItemTileSmall({ prepItem, prepTask, userid, handlers, users }: PrepItemTileSmallProps) {
   function onClickSpawnPrepTask() {
     const request: SpawnPrepTaskDto = {
       prepItemId: prepItem.id,
@@ -22,15 +25,19 @@ export function PrepItemTileSmall({ prepItem, prepTask, userid, handlers }: Prep
     handlers.spawnPrepTask(request)
   }
 
+  function onClickAssignPrepTask(assignedToId: string) {
+    if (!prepTask) {
+      return
+    }
+    handlers.assignPrepTask(prepTask.id, assignedToId)
+  }
 
   return (
     <div className="my-4 flex flex-row items-center gap-2">
       <div className="">{prepItem.name}</div>
       <div className="">
-        {prepTask ? null : ( 
-          <PrepTaskSpawnButton onClickSpawnPrepTask={onClickSpawnPrepTask} />
-        )}
-        <AssignedTo prepTask={prepTask} />
+        {prepTask ? null : <PrepTaskSpawnButton onClickSpawnPrepTask={onClickSpawnPrepTask} />}
+        <AssignedTo prepTask={prepTask} users={users} onAssignPrepTask={onClickAssignPrepTask} />
       </div>
     </div>
   )
@@ -57,12 +64,33 @@ function PrepTaskSpawnButton({ onClickSpawnPrepTask }: { onClickSpawnPrepTask: (
   )
 }
 
-function AssignedTo({ prepTask }: { prepTask?: PrepTaskDto }) {
+function AssignedTo({
+  prepTask,
+  users,
+  onAssignPrepTask,
+}: {
+  prepTask?: PrepTaskDto
+  users: UserDto[]
+  onAssignPrepTask: (assignedToId: string) => void
+}) {
   if (!prepTask) {
     return null
   }
   if (prepTask?.assignedTo) {
-    return <UserAvatar user={prepTask.assignedTo} size="small" />
+    return (
+      <UsersListPopover onClickUser={onAssignPrepTask} users={users}>
+        <UserAvatar user={prepTask.assignedTo} size="small" />
+      </UsersListPopover>
+    )
   }
-  return <RxAvatar size={24} className="flex text-slate-500" />
+  return (
+    <UsersListPopover onClickUser={onAssignPrepTask} users={users}>
+      <RxAvatar
+        data-ripple-light="true"
+        data-popover-target="popover"
+        size={24}
+        className="flex cursor-pointer text-slate-500 hover:text-slate-200"
+      />
+    </UsersListPopover>
+  )
 }

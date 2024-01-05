@@ -1,6 +1,6 @@
 import { FaClipboard } from "react-icons/fa"
 import { SpawnPrepTaskDto } from "../../app/api/prepItems/[id]/spawnPrepTask/route"
-import { PrepBoardDto } from "../../mocks/mocks.interfaces"
+import { PrepBoardDto, UserDto } from "../../mocks/mocks.interfaces"
 import { NewTabLink } from "../NewTabLink/NewTabLink"
 import { PageTitle } from "../PageTitle/PageTitle"
 import { PrepItemTileSmall } from "../PrepItemTileSmall/PrepItemTileSmall"
@@ -8,12 +8,14 @@ import { PrepItemTileSmall } from "../PrepItemTileSmall/PrepItemTileSmall"
 interface BoardProps {
   prepBoard: PrepBoardDto
   userid: string
+  users: UserDto[]
   handlers: {
     spawnPrepTask: (dto: SpawnPrepTaskDto) => Promise<void>
+    assignPrepTask: (prepTaskId: string, assignedToId: string) => Promise<void>
   }
 }
 
-export function Board({ prepBoard, userid, handlers }: BoardProps) {
+export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
   const prepItems = prepBoard.prepItems
   const categories = [...new Set(prepItems.map((item) => item.category))]
 
@@ -37,6 +39,7 @@ export function Board({ prepBoard, userid, handlers }: BoardProps) {
                 .map((item) => (
                   <li key={item.id}>
                     <PrepItemTileSmall
+                      users={users}
                       userid={userid}
                       prepItem={item}
                       prepTask={prepBoard.prepTasks.find((task) => task.prepItem.id === item.id)}

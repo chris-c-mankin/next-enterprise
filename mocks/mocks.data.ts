@@ -13,6 +13,15 @@ const mocks: Mocks = {
 }
 
 const mockPrepItemCategories = ["Produce", "Meat", "Dairy", "Dry Goods", "Frozen", "Other"]
+const avatarColors = [
+  "bg-red-500",
+  "bg-yellow-500",
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-indigo-500",
+  "bg-purple-500",
+  "bg-pink-500",
+]
 
 try {
   const data = fs.readFileSync("mocks.data.json", "utf8")
@@ -30,6 +39,9 @@ try {
     email: faker.internet.email(),
     phoneNumber: faker.phone.number(),
     createdDate: faker.date.past(),
+    profile: {
+      avatarColor: avatarColors[Math.round(Math.random() * avatarColors.length)]!,
+    }
   }))
 
   const prepBoards: PrepBoardDto[] = Array.from({ length: 5 }, () => ({
