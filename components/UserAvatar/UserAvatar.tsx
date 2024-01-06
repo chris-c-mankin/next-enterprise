@@ -14,7 +14,7 @@ const sizes = {
 export function UserAvatar({ user, size }: UserAvatarProps) {
   const avatarSize = sizes[size]
   return (
-    <div className={`flex flex-row cursor-pointer items-center justify-center gap-2 rounded-full ${user.profile.avatarColor} ${avatarSize}`}>
+    <div className={`z-0 flex flex-row cursor-pointer items-center justify-center gap-2 rounded-full ${user.profile.avatarColor} ${avatarSize}`}>
       <div>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</div>
     </div>
   )

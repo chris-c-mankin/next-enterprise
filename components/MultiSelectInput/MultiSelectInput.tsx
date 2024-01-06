@@ -1,20 +1,26 @@
 import { useState } from "react"
 
-export interface SelectInputProps {
+export interface MultiSelectInputProps {
   label: string
-  selected?: { value: string; label: string }
-  onChange: (value: string) => void
+  selected?: string[]
+  onChange: (values: string[]) => void
   options: { value: string; label: string }[]
   renderLabel?: (option: { value: string; label: string }) => JSX.Element
 }
 
-export function SelectInput(props: SelectInputProps) {
+export function MultiSelectInput(props: MultiSelectInputProps) {
   const [showOptions, setShowOptions] = useState(false)
 
   function onSelect(option: { value: string; label: string }) {
-    setShowOptions(false)
-    props.onChange(option.value)
+    if (props.selected?.some((selected) => selected === option.value)) {
+      props.onChange(props.selected.filter((selected) => selected !== option.value))
+      return
+    } else {
+      props.onChange([...(props.selected ?? []), option.value])
+    }
   }
+
+  const selected = props.selected?.map((selected) => props.options.find((option) => option.value === selected))
 
   return (
     <div className="w-[200px]">
@@ -25,17 +31,16 @@ export function SelectInput(props: SelectInputProps) {
         <button
           onClick={() => setShowOptions(!showOptions)}
           type="button"
-          className="z-1 relative w-full h-10 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6"
+          className="relative h-10 w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6"
           aria-haspopup="listbox"
           aria-expanded="true"
           aria-labelledby="listbox-label"
         >
-          {props.selected && !props.renderLabel && (
+          {props.selected && (
             <span className="flex items-center">
-              <span className="ml-3 block truncate">{props.selected.label}</span>
+              <span className="ml-3 block truncate">{selected?.map((selected) => selected?.label).join(", ")}</span>
             </span>
           )}
-          {props.selected && props.renderLabel && props.renderLabel(props.selected)}
           <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
             <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path
@@ -48,7 +53,7 @@ export function SelectInput(props: SelectInputProps) {
         </button>
         {showOptions && (
           <ul
-            className="opacity/5 absolute z-1 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm"
+            className="opacity/5 absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm"
             tabIndex={-1}
             role="listbox"
             aria-labelledby="listbox-label"
@@ -60,7 +65,7 @@ export function SelectInput(props: SelectInputProps) {
                 className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900"
                 id="listbox-option-0"
                 role="option"
-                aria-selected={option.value === props.selected?.value}
+                aria-selected={props.selected?.some((selected) => selected === option.value)}
                 onClick={() => onSelect(option)}
               >
                 {props.renderLabel && props.renderLabel(option)}
@@ -69,18 +74,18 @@ export function SelectInput(props: SelectInputProps) {
                     <div className="flex items-center">
                       <span className="ml-3 block truncate font-normal">{option.label}</span>
                     </div>
-                    {option.value === props.selected?.value && (
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600">
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path
-                            fill-rule="evenodd"
-                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                            clip-rule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    )}
                   </>
+                )}
+                {props.selected?.includes(option.value) && (
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600">
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </span>
                 )}
               </li>
             ))}
