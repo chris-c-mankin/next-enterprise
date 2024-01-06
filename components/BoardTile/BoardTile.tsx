@@ -8,7 +8,7 @@ export interface BoardTileProps {
 
 export function BoardTile({ name, description, id }: BoardTileProps) {
   return (
-    <Link href={`/board/${id}`}>
+    <Link href={`/boards/${id}`}>
       <div className="rounded-lg border border-slate-500 p-8 hover:border-slate-400">
         <p className="text-xl">{name}</p>
         {description && <p className="text-slate-400">{description}</p>}

@@ -7,7 +7,7 @@ export function Popover({
   trigger = "click",
 }: {
   children: JSX.Element
-  renderContent: () => JSX.Element
+  renderContent: (onClose: () => void) => JSX.Element
   trigger?: "click" | "hover"
 }) {
   const [show, setShow] = useState(false)
@@ -54,7 +54,7 @@ export function Popover({
       </div>
       <div hidden={!show} className="absolute bottom-[100%] z-50 h-fit w-[300px] min-w-fit transition-all">
         <div className="mb-[10px] rounded bg-slate-800 p-3 shadow-[10px_30px_150px_rgba(46,38,92,0.25)]">
-          {renderContent()}
+          {renderContent(() => setShow(false))}
         </div>
       </div>
     </div>

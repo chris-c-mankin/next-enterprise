@@ -1,11 +1,17 @@
 "use client"
+import Link from "next/link"
 import { RxAvatar, RxPlusCircled } from "react-icons/rx"
 import { SpawnPrepTaskDto } from "../../app/api/prepItems/[id]/spawnPrepTask/route"
-import { PrepItemDto, PrepTaskDto, UserDto } from "../../mocks/mocks.interfaces"
+import { taskStatusToColorMap } from "../../maps/taskStatusToColor"
+import { taskStatusToLabelMap } from "../../maps/taskStatusToLabel"
+import { PrepItemDto, PrepTaskDto, PrepTaskStatus, UserDto } from "../../mocks/mocks.interfaces"
+import { StatusBadge } from "../StatusBadge/StatusBadge"
+import { TaskStatusPopover } from "../TaskStatusPopover/TaskStatusPopover"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
 import { UsersListPopover } from "../UsersListPopover/UsersListPopover"
 
 interface PrepItemTileSmallProps {
+  boardId: string
   users: UserDto[]
   prepItem: PrepItemDto
   prepTask?: PrepTaskDto
@@ -13,10 +19,11 @@ interface PrepItemTileSmallProps {
   handlers: {
     spawnPrepTask: (dto: SpawnPrepTaskDto) => Promise<void>
     assignPrepTask: (prepTaskId: string, assignedToId: string) => Promise<void>
+    transistionPrepTask: (prepTaskId: string, status: PrepTaskStatus) => Promise<void>
   }
 }
 
-export function PrepItemTileSmall({ prepItem, prepTask, userid, handlers, users }: PrepItemTileSmallProps) {
+export function PrepItemTileSmall({ boardId, prepItem, prepTask, userid, handlers, users }: PrepItemTileSmallProps) {
   function onClickSpawnPrepTask() {
     const request: SpawnPrepTaskDto = {
       prepItemId: prepItem.id,
@@ -34,10 +41,19 @@ export function PrepItemTileSmall({ prepItem, prepTask, userid, handlers, users 
 
   return (
     <div className="my-4 flex flex-row items-center gap-2">
-      <div className="">{prepItem.name}</div>
-      <div className="">
+      <Link href={`/boards/${boardId}/prepItems/${prepItem.id}`}>
+        <div className="">{prepItem.name}</div>
+      </Link>
+      <div className="flex gap-4">
         {prepTask ? null : <PrepTaskSpawnButton onClickSpawnPrepTask={onClickSpawnPrepTask} />}
         <AssignedTo prepTask={prepTask} users={users} onAssignPrepTask={onClickAssignPrepTask} />
+        {prepTask && (
+          <TaskStatusPopover
+            onClickStatus={(status: PrepTaskStatus) => handlers.transistionPrepTask(prepTask.id, status)}
+          >
+            <StatusBadge color={taskStatusToColorMap[prepTask.status]} label={taskStatusToLabelMap[prepTask.status]} />
+          </TaskStatusPopover>
+        )}
       </div>
     </div>
   )

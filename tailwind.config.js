@@ -6,7 +6,7 @@ const defaultTheme = require("tailwindcss/defaultTheme")
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: "class",
-  safelist:  [
+  safelist: [
     "bg-red-500",
     "bg-yellow-500",
     "bg-green-500",
@@ -14,6 +14,10 @@ module.exports = {
     "bg-indigo-500",
     "bg-purple-500",
     "bg-pink-500",
+    "bg-gray-400",
+    "bg-blue-400",
+    "bg-green-400",
+    "bg-red-400",
   ],
   content: [
     "./index.html",

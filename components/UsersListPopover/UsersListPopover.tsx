@@ -10,21 +10,29 @@ export interface UsersListPopoverProps {
 
 export function UsersListPopover(props: UsersListPopoverProps) {
   return (
-    <Popover renderContent={() => (
-      <div className="flex flex-col gap-2">
-        {props.users.map(user => (
-          <button
-            key={user.id}
-            onClick={() => props.onClickUser(user.id)}
-            className="flex flex-row items-center gap-2">
-            <div className="flex flex-row items-center gap-2">
-              <UserAvatar user={user} size="small" />
-              <div>{user.firstName} {user.lastName}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    )}>
+    <Popover
+      renderContent={(onClose) => (
+        <div className="flex flex-col gap-2">
+          {props.users.map((user) => (
+            <button
+              key={user.id}
+              onClick={() => {
+                props.onClickUser(user.id)
+                onClose()
+              }}
+              className="flex flex-row items-center gap-2"
+            >
+              <div className="flex flex-row items-center gap-2">
+                <UserAvatar user={user} size="small" />
+                <div>
+                  {user.firstName} {user.lastName}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    >
       {props.children}
     </Popover>
   )

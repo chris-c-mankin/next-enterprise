@@ -41,7 +41,7 @@ export interface PrepTaskDto {
 
 export enum PrepTaskStatus {
   ToDo = "To Do",
-  InProgress = "In Progress",
-  Complete = "Complete",
+  Active = "Active",
+  Done = "Done",
   Cancelled = "Cancelled",
 }

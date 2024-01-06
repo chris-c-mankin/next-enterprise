@@ -60,6 +60,18 @@ export function assignPrepTask(prepTaskId: string, assignedToId: string): Promis
   return Promise.resolve(prepTask)
 }
 
+export async function unstartPrepTask(prepTaskId: string): Promise<PrepTaskDto> {
+  const prepTask = mocks.prepBoards
+    .flatMap((prepBoard) => prepBoard.prepTasks)
+    .find((prepTask) => prepTask.id === prepTaskId)
+  if (!prepTask) {
+    throw new Error("PrepTask not found")
+  }
+  prepTask.status = PrepTaskStatus.ToDo
+  saveMocks()
+  return prepTask
+}
+
 export async function startPrepTask(prepTaskId: string): Promise<PrepTaskDto> {
   const prepTask = mocks.prepBoards
     .flatMap((prepBoard) => prepBoard.prepTasks)
@@ -67,7 +79,7 @@ export async function startPrepTask(prepTaskId: string): Promise<PrepTaskDto> {
   if (!prepTask) {
     throw new Error("PrepTask not found")
   }
-  prepTask.status = PrepTaskStatus.InProgress
+  prepTask.status = PrepTaskStatus.Active
   saveMocks()
   return prepTask
 }
@@ -79,7 +91,7 @@ export async function completePrepTask(prepTaskId: string): Promise<PrepTaskDto>
   if (!prepTask) {
     throw new Error("PrepTask not found")
   }
-  prepTask.status = PrepTaskStatus.Complete
+  prepTask.status = PrepTaskStatus.Done
   saveMocks()
   return prepTask
 }
