@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export interface MultiSelectInputProps {
   label: string
@@ -10,6 +10,24 @@ export interface MultiSelectInputProps {
 
 export function MultiSelectInput(props: MultiSelectInputProps) {
   const [showOptions, setShowOptions] = useState(false)
+  const wrapperRef = useRef<any>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: any) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowOptions(false)
+      }
+    }
+
+    if (showOptions) {
+      // Bind the event listener
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        // Unbind the event listener on clean up
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [showOptions, wrapperRef])
 
   function onSelect(option: { value: string; label: string }) {
     if (props.selected?.some((selected) => selected === option.value)) {
@@ -23,7 +41,7 @@ export function MultiSelectInput(props: MultiSelectInputProps) {
   const selected = props.selected?.map((selected) => props.options.find((option) => option.value === selected))
 
   return (
-    <div className="w-[200px]">
+    <div ref={wrapperRef} className="w-[200px]">
       <label id="listbox-label" className="block text-sm font-medium leading-6 text-gray-300">
         {props.label}
       </label>
