@@ -1,5 +1,5 @@
 import mocks, { saveMocks } from "./mocks.data"
-import { PrepBoardDto, PrepTaskDto, PrepTaskStatus, UserDto } from "./mocks.interfaces"
+import { PrepBoardDto, PrepItemDto, PrepTaskDto, PrepTaskStatus, UserDto } from "./mocks.interfaces"
 
 export async function getUsers(): Promise<UserDto[]> {
   return mocks.users
@@ -21,13 +21,24 @@ export async function getPrepBoardById(prepBoardId: string): Promise<PrepBoardDt
   return prepBoard
 }
 
-export function spawnPrepTask(prepItemId: string, createdById: string): Promise<PrepTaskDto> {
-  const prepBoard = mocks.prepBoards.find((prepBoard) =>
-    prepBoard.prepItems.some((prepItem) => prepItem.id === prepItemId)
-  )
-  const prepItem = mocks.prepBoards
-    .flatMap((prepBoard) => prepBoard.prepItems)
-    .find((prepItem) => prepItem.id === prepItemId)
+export async function getPrepItemById(prepBoardId: string, prepItemId: string): Promise<PrepItemDto> {
+  const prepBoard = mocks.prepBoards.find((prepBoard) => prepBoard.id === prepBoardId)
+  if (!prepBoard) {
+    throw new Error("PrepBoard not found")
+  }
+  const prepItem = prepBoard.prepItems.find((prepItem) => prepItem.id === prepItemId)
+  if (!prepItem) {
+    throw new Error("PrepItem not found")
+  }
+  return prepItem
+}
+
+export function spawnPrepTask(prepBoardId: string, prepItemId: string, createdById: string): Promise<PrepTaskDto> {
+  const prepBoard = mocks.prepBoards.find((prepBoard) => prepBoard.id === prepBoardId)
+  if (!prepBoard) {
+    throw new Error("PrepBoard not found")
+  }
+  const prepItem = prepBoard.prepItems.find((prepItem) => prepItem.id === prepItemId)
   const createdBy = mocks.users.find((user) => user.id === createdById)
   if (!prepBoard || !prepItem || !createdBy) {
     throw new Error("PrepBoard or PrepItem not found")
@@ -60,7 +71,7 @@ export function assignPrepTask(prepTaskId: string, assignedToId: string): Promis
   return Promise.resolve(prepTask)
 }
 
-export async function unstartPrepTask(prepTaskId: string): Promise<PrepTaskDto> {
+export async function resetPrepTask(prepTaskId: string): Promise<PrepTaskDto> {
   const prepTask = mocks.prepBoards
     .flatMap((prepBoard) => prepBoard.prepTasks)
     .find((prepTask) => prepTask.id === prepTaskId)

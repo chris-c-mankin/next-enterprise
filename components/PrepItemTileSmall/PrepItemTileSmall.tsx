@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { RxAvatar, RxPlusCircled } from "react-icons/rx"
-import { SpawnPrepTaskDto } from "../../app/api/prepItems/[id]/spawnPrepTask/route"
+import { SpawnPrepTaskDto } from "../../app/api/boards/[boardId]/prep-items/[prepItemId]/spawn-prep-task/route"
 import { taskStatusToColorMap } from "../../maps/taskStatusToColor"
 import { taskStatusToLabelMap } from "../../maps/taskStatusToLabel"
 import { PrepItemDto, PrepTaskDto, PrepTaskStatus, UserDto } from "../../mocks/mocks.interfaces"

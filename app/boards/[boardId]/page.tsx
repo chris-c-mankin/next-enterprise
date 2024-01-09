@@ -1,8 +1,8 @@
 import { revalidatePath } from "next/cache"
 import { Board } from "../../../components/Board/Board"
-import { assignPrepTask, cancelPrepTask, completePrepTask, getLoggedInUser, getPrepBoardById, getUsers, spawnPrepTask, startPrepTask, unstartPrepTask } from "../../../mocks/mocks.api"
+import { assignPrepTask, cancelPrepTask, completePrepTask, getLoggedInUser, getPrepBoardById, getUsers, spawnPrepTask, startPrepTask, resetPrepTask } from "../../../mocks/mocks.api"
 import { PrepTaskStatus } from "../../../mocks/mocks.interfaces"
-import { SpawnPrepTaskDto } from "../../api/prepItems/[id]/spawnPrepTask/route"
+import { SpawnPrepTaskDto } from "../../api/boards/[boardId]/prep-items/[prepItemId]/spawn-prep-task/route"
 
 export default async function Page({ params }: { params: { boardId: string } }) {
   const prepBoard = await getPrepBoardById(params.boardId)
@@ -25,7 +25,7 @@ export default async function Page({ params }: { params: { boardId: string } }) 
     "use server"
     switch (status) {
       case PrepTaskStatus.ToDo:
-        await unstartPrepTask(prepTaskId)
+        await resetPrepTask(prepTaskId)
         break
       case PrepTaskStatus.Active:
         await startPrepTask(prepTaskId)

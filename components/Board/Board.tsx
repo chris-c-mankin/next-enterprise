@@ -1,13 +1,16 @@
 "use client"
 import { useMemo, useState } from "react"
 import { FaClipboard } from "react-icons/fa"
-import { SpawnPrepTaskDto } from "../../app/api/prepItems/[id]/spawnPrepTask/route"
+import { SpawnPrepTaskDto } from "../../app/api/boards/[boardId]/prep-items/[prepItemId]/spawn-prep-task/route"
+import { taskStatusToColorMap } from "../../maps/taskStatusToColor"
+import { taskStatusToLabelMap } from "../../maps/taskStatusToLabel"
 import { PrepBoardDto, PrepItemDto, PrepTaskStatus, UserDto } from "../../mocks/mocks.interfaces"
 import { MultiSelectInput } from "../MultiSelectInput/MultiSelectInput"
 import { NewTabLink } from "../NewTabLink/NewTabLink"
 import { PageTitle } from "../PageTitle/PageTitle"
 import { PrepItemTileSmall } from "../PrepItemTileSmall/PrepItemTileSmall"
 import { SelectInput } from "../SelectInput/SelectInput"
+import { StatusBadge } from "../StatusBadge/StatusBadge"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface BoardProps {
@@ -37,6 +40,13 @@ const itemTypeOptions = [
   },
 ]
 
+const statusOptions = [PrepTaskStatus.ToDo, PrepTaskStatus.Active, PrepTaskStatus.Done, PrepTaskStatus.Cancelled].map(
+  (status) => ({
+    value: status,
+    label: taskStatusToLabelMap[status],
+  })
+)
+
 export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
   const prepItems = prepBoard.prepItems
   const categories = [...new Set(prepItems.map((item) => item.category))]
@@ -47,6 +57,7 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
   })
 
   const [assignedToFilter, setAssignedToFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState<string[]>([])
 
   const userFilterOptions = useMemo(() => {
     return users.map((user) => ({
@@ -58,11 +69,12 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
   const prepItemsToDisplay = useMemo(() => {
     const predicates: ((item: PrepItemDto) => boolean)[] = []
     if (assignedToFilter.length > 0) predicates.push((item) => filterByAssignedTo(item, prepBoard, assignedToFilter))
+    if (statusFilter.length > 0) predicates.push((item) => filterByStatus(item, prepBoard, statusFilter))
     if (itemTypeFilter.value === "tasks") predicates.push((item) => filterByTasks(item, prepBoard))
     if (itemTypeFilter.value === "items") predicates.push((item) => filterByItems(item, prepBoard))
 
     return prepItems.filter((item) => predicates.every((predicate) => predicate(item)))
-  }, [assignedToFilter, itemTypeFilter.value, prepBoard, prepItems])
+  }, [assignedToFilter, itemTypeFilter.value, prepBoard, prepItems, statusFilter])
 
   return (
     <>
@@ -98,6 +110,20 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
             )
           }}
         />
+        <MultiSelectInput
+          label="Status"
+          onChange={setStatusFilter}
+          options={statusOptions}
+          selected={statusFilter}
+          renderLabel={(option) => {
+            return (
+              <StatusBadge
+                color={taskStatusToColorMap[option.value as PrepTaskStatus]}
+                label={taskStatusToLabelMap[option.value as PrepTaskStatus]}
+              />
+            )
+          }}
+        />
       </div>
       <div className="grid w-full gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => (
@@ -130,6 +156,12 @@ function filterByAssignedTo(item: PrepItemDto, prepBoard: PrepBoardDto, assigned
   const prepTask = prepBoard.prepTasks.find((task) => task.prepItem.id === item.id)
   if (!prepTask) return false
   return assignedToFilter.some((userId) => prepTask.assignedTo?.id === userId)
+}
+
+function filterByStatus(item: PrepItemDto, prepBoard: PrepBoardDto, statusFilter: string[]) {
+  const prepTask = prepBoard.prepTasks.find((task) => task.prepItem.id === item.id)
+  if (!prepTask) return false
+  return statusFilter.some((status) => prepTask.status === status)
 }
 
 function filterByTasks(item: PrepItemDto, prepBoard: PrepBoardDto) {
