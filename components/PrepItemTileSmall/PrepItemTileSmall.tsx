@@ -1,112 +1,93 @@
 "use client"
 import Link from "next/link"
-import { RxAvatar, RxPlusCircled } from "react-icons/rx"
-import { SpawnPrepTaskDto } from "../../app/api/boards/[boardId]/prep-items/[prepItemId]/spawn-prep-task/route"
-import { taskStatusToColorMap } from "../../maps/taskStatusToColor"
-import { taskStatusToLabelMap } from "../../maps/taskStatusToLabel"
-import { PrepItemDto, PrepTaskDto, PrepTaskStatus, UserDto } from "../../mocks/mocks.interfaces"
-import { StatusBadge } from "../StatusBadge/StatusBadge"
-import { TaskStatusPopover } from "../TaskStatusPopover/TaskStatusPopover"
-import { UserAvatar } from "../UserAvatar/UserAvatar"
-import { UsersListPopover } from "../UsersListPopover/UsersListPopover"
+import { useState } from "react"
+import { RxPlusCircled } from "react-icons/rx"
+import { PrepItemDto, PrepTaskDto, UserDto } from "../../mocks/mocks.interfaces"
+import { useQueryGetPrepItem } from "../../queries/prep-items/get-prep-item.query"
+import { useMutationSpawnPrepTask } from "../../queries/prep-items/spawn-prep-task.query"
+import { useQueryGetPrepTask } from "../../queries/prep-tasks/get-prep-task.query"
+import { PrepTaskAssignedToButton } from "../PrepTaskAssignedToButton/PrepTaskAssignedToButton.component"
+import { PrepTaskStatusButton } from "../PrepTaskStatusButton/PrepTaskStatusButton.component"
 
 interface PrepItemTileSmallProps {
   boardId: string
+  prepItemId: string
+  prepTaskId?: string
   users: UserDto[]
-  prepItem: PrepItemDto
-  prepTask?: PrepTaskDto
   userid: string
-  handlers: {
-    spawnPrepTask: (dto: SpawnPrepTaskDto) => Promise<void>
-    assignPrepTask: (prepTaskId: string, assignedToId: string) => Promise<void>
-    transistionPrepTask: (prepTaskId: string, status: PrepTaskStatus) => Promise<void>
-  }
 }
 
-export function PrepItemTileSmall({ boardId, prepItem, prepTask, userid, handlers, users }: PrepItemTileSmallProps) {
-  function onClickSpawnPrepTask() {
-    const request: SpawnPrepTaskDto = {
-      prepItemId: prepItem.id,
-      userId: userid,
-    }
-    handlers.spawnPrepTask(request)
+export function PrepItemTileSmall(props: PrepItemTileSmallProps) {
+  const [createdPrepTask, setCreatedPrepTask] = useState<PrepTaskDto | undefined>(undefined)
+
+  const prepItemQueryResult = useQueryGetPrepItem(props.boardId, props.prepItemId)
+  const prepTaskQueryResult = useQueryGetPrepTask(props.boardId, props.prepTaskId || createdPrepTask?.id)
+
+  const spawnPrepTask = useMutationSpawnPrepTask()
+
+  function onClickSpawPrepTask() {
+    spawnPrepTask.mutate(
+      { prepItemId: props.prepItemId, boardId: props.boardId },
+      {
+        onSuccess: (prepTask) => {
+          setCreatedPrepTask(prepTask)
+        },
+      }
+    )
   }
 
-  function onClickAssignPrepTask(assignedToId: string) {
-    if (!prepTask) {
-      return
-    }
-    handlers.assignPrepTask(prepTask.id, assignedToId)
+  const prepItem = prepItemQueryResult.data
+  const prepTask = prepTaskQueryResult.data
+
+  if (!prepItem) {
+    return null
   }
 
   return (
+    <PrepItemTileSmallComponent
+      boardId={props.boardId}
+      prepItem={prepItem}
+      prepTask={prepTask}
+      users={props.users}
+      userid={props.userid}
+      onSpawnPrepTask={onClickSpawPrepTask}
+    />
+  )
+}
+
+interface PrepItemTileSmallComponentProps {
+  boardId: string
+  prepItem: PrepItemDto
+  prepTask?: PrepTaskDto
+  users: UserDto[]
+  userid: string
+  onSpawnPrepTask: () => void
+}
+
+function PrepItemTileSmallComponent(props: PrepItemTileSmallComponentProps) {
+  return (
     <div className="my-4 flex flex-row items-center gap-2">
-      <Link href={`/boards/${boardId}/prepItems/${prepItem.id}`}>
-        <div className="">{prepItem.name}</div>
+      <Link href={`/boards/${props.boardId}/prepItems/${props.prepItem.id}`}>
+        <div className="">{props.prepItem.name}</div>
       </Link>
       <div className="flex gap-4">
-        {prepTask ? null : <PrepTaskSpawnButton onClickSpawnPrepTask={onClickSpawnPrepTask} />}
-        <AssignedTo prepTask={prepTask} users={users} onAssignPrepTask={onClickAssignPrepTask} />
-        {prepTask && (
-          <TaskStatusPopover
-            onClickStatus={(status: PrepTaskStatus) => handlers.transistionPrepTask(prepTask.id, status)}
-          >
-            <StatusBadge color={taskStatusToColorMap[prepTask.status]} label={taskStatusToLabelMap[prepTask.status]} />
-          </TaskStatusPopover>
+        {props.prepTask ? null : (
+          <button onClick={props.onSpawnPrepTask} className="flex flex-row items-center gap-2">
+            <RxPlusCircled className="flex" />
+          </button>
         )}
+
+        {props.prepTask && <PrepTaskInlineMenu prepTask={props.prepTask} users={props.users} />}
       </div>
     </div>
   )
 }
 
-function PrepTaskSpawnButton({ onClickSpawnPrepTask }: { onClickSpawnPrepTask: () => void }) {
-  // function onClick() {
-  //   const request: SpawnPrepTaskDto = {
-  //     prepItemId: prepItem.id,
-  //     userId: userid,
-  //   }
-  //   fetch(`/api/prepItems/${prepItem.id}/spawnPrepTask`, {
-  //     method: "POST",
-  //     body: JSON.stringify(request),
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   })
-  // }
+function PrepTaskInlineMenu(props: { prepTask: PrepTaskDto, users: UserDto[] }) {
   return (
-    <button onClick={onClickSpawnPrepTask} className="flex flex-row items-center gap-2">
-      <RxPlusCircled className="flex" />
-    </button>
-  )
-}
-
-function AssignedTo({
-  prepTask,
-  users,
-  onAssignPrepTask,
-}: {
-  prepTask?: PrepTaskDto
-  users: UserDto[]
-  onAssignPrepTask: (assignedToId: string) => void
-}) {
-  if (!prepTask) {
-    return null
-  }
-  if (prepTask?.assignedTo) {
-    return (
-      <UsersListPopover onClickUser={onAssignPrepTask} users={users}>
-        <UserAvatar user={prepTask.assignedTo} size="small" />
-      </UsersListPopover>
-    )
-  }
-  return (
-    <UsersListPopover onClickUser={onAssignPrepTask} users={users}>
-      <RxAvatar
-        data-ripple-light="true"
-        data-popover-target="popover"
-        size={24}
-        className="flex cursor-pointer text-slate-500 hover:text-slate-200"
-      />
-    </UsersListPopover>
+    <>
+      <PrepTaskAssignedToButton prepTask={props.prepTask} users={props.users} />
+      <PrepTaskStatusButton prepTask={props.prepTask} />
+    </>
   )
 }

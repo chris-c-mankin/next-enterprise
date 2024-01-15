@@ -1,10 +1,10 @@
 "use client"
 import { useMemo, useState } from "react"
 import { FaClipboard } from "react-icons/fa"
-import { SpawnPrepTaskDto } from "../../app/api/boards/[boardId]/prep-items/[prepItemId]/spawn-prep-task/route"
 import { taskStatusToColorMap } from "../../maps/taskStatusToColor"
 import { taskStatusToLabelMap } from "../../maps/taskStatusToLabel"
 import { PrepBoardDto, PrepItemDto, PrepTaskStatus, UserDto } from "../../mocks/mocks.interfaces"
+import { useQueryGetPrepBoard } from "../../queries/prep-boards/get-prep-board.query"
 import { MultiSelectInput } from "../MultiSelectInput/MultiSelectInput"
 import { NewTabLink } from "../NewTabLink/NewTabLink"
 import { PageTitle } from "../PageTitle/PageTitle"
@@ -14,14 +14,9 @@ import { StatusBadge } from "../StatusBadge/StatusBadge"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface BoardProps {
-  prepBoard: PrepBoardDto
+  prepBoardId: string
   userid: string
   users: UserDto[]
-  handlers: {
-    spawnPrepTask: (dto: SpawnPrepTaskDto) => Promise<void>
-    assignPrepTask: (prepTaskId: string, assignedToId: string) => Promise<void>
-    transistionPrepTask: (prepTaskId: string, status: PrepTaskStatus) => Promise<void>
-  }
 }
 
 type SelectOption = { value: string; label: string }
@@ -47,8 +42,22 @@ const statusOptions = [PrepTaskStatus.ToDo, PrepTaskStatus.Active, PrepTaskStatu
   })
 )
 
-export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
-  const prepItems = prepBoard.prepItems
+export function Board({ prepBoardId, userid, users }: BoardProps) {
+  const prepBoardQueryResult = useQueryGetPrepBoard(prepBoardId)
+
+  if (!prepBoardQueryResult.data) return null
+
+  return <BoardComponent board={prepBoardQueryResult.data} users={users} userid={userid} />
+}
+
+interface BoardComponentProps {
+  board: PrepBoardDto
+  users: UserDto[]
+  userid: string
+}
+
+function BoardComponent(props: BoardComponentProps) {
+  const prepItems = props.board.prepItems
   const categories = [...new Set(prepItems.map((item) => item.category))]
 
   const [itemTypeFilter, setItemTypeFilter] = useState<SelectOption>({
@@ -60,32 +69,32 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
   const [statusFilter, setStatusFilter] = useState<string[]>([])
 
   const userFilterOptions = useMemo(() => {
-    return users.map((user) => ({
+    return props.users.map((user) => ({
       value: user.id,
       label: `${user.firstName} ${user.lastName}`,
     }))
-  }, [users])
+  }, [props.users])
 
   const prepItemsToDisplay = useMemo(() => {
     const predicates: ((item: PrepItemDto) => boolean)[] = []
-    if (assignedToFilter.length > 0) predicates.push((item) => filterByAssignedTo(item, prepBoard, assignedToFilter))
-    if (statusFilter.length > 0) predicates.push((item) => filterByStatus(item, prepBoard, statusFilter))
-    if (itemTypeFilter.value === "tasks") predicates.push((item) => filterByTasks(item, prepBoard))
-    if (itemTypeFilter.value === "items") predicates.push((item) => filterByItems(item, prepBoard))
+    if (assignedToFilter.length > 0) predicates.push((item) => filterByAssignedTo(item, props.board, assignedToFilter))
+    if (statusFilter.length > 0) predicates.push((item) => filterByStatus(item, props.board, statusFilter))
+    if (itemTypeFilter.value === "tasks") predicates.push((item) => filterByTasks(item, props.board))
+    if (itemTypeFilter.value === "items") predicates.push((item) => filterByItems(item, props.board))
 
     return prepItems.filter((item) => predicates.every((predicate) => predicate(item)))
-  }, [assignedToFilter, itemTypeFilter.value, prepBoard, prepItems, statusFilter])
+  }, [assignedToFilter, itemTypeFilter.value, prepItems, props.board, statusFilter])
 
   return (
     <>
       <header className="mb-4 flex w-full flex-row items-center">
         <NewTabLink className="flex flex-row items-center text-sm" href="/board/1">
           <FaClipboard className="flex" />
-          &nbsp;{prepBoard.name}
+          &nbsp;{props.board.name}
         </NewTabLink>
       </header>
-      <PageTitle title={prepBoard.name} />
-      <h2 className="mb-12">{prepBoard.description}</h2>
+      <PageTitle title={props.board.name} />
+      <h2 className="mb-12">{props.board.description}</h2>
       <div className="mb-8 grid grid-flow-col justify-start gap-4">
         <SelectInput
           label="Item Type"
@@ -99,7 +108,7 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
           options={userFilterOptions}
           selected={assignedToFilter}
           renderLabel={(option) => {
-            const user = users.find((user) => user.id === option.value)!
+            const user = props.users.find((user) => user.id === option.value)!
             return (
               <div className="flex flex-row items-center gap-2">
                 <UserAvatar user={user} size="small" />
@@ -135,12 +144,11 @@ export function Board({ prepBoard, userid, handlers, users }: BoardProps) {
                 .map((item) => (
                   <li key={item.id}>
                     <PrepItemTileSmall
-                      boardId={prepBoard.id}
-                      users={users}
-                      userid={userid}
-                      prepItem={item}
-                      prepTask={prepBoard.prepTasks.find((task) => task.prepItem.id === item.id)}
-                      handlers={handlers}
+                      boardId={props.board.id}
+                      users={props.users}
+                      userid={props.userid}
+                      prepItemId={item.id}
+                      prepTaskId={props.board.prepTasks.find((task) => task.prepItem.id === item.id)?.id}
                     />
                   </li>
                 ))}

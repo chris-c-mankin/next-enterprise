@@ -33,6 +33,16 @@ export async function getPrepItemById(prepBoardId: string, prepItemId: string): 
   return prepItem
 }
 
+export async function getPrepTaskById(prepTaskId: string): Promise<PrepTaskDto> {
+  const prepTask = mocks.prepBoards
+    .flatMap((prepBoard) => prepBoard.prepTasks)
+    .find((prepTask) => prepTask.id === prepTaskId)
+  if (!prepTask) {
+    throw new Error("PrepTask not found")
+  }
+  return prepTask
+}
+
 export function spawnPrepTask(prepBoardId: string, prepItemId: string, createdById: string): Promise<PrepTaskDto> {
   const prepBoard = mocks.prepBoards.find((prepBoard) => prepBoard.id === prepBoardId)
   if (!prepBoard) {

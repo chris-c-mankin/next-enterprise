@@ -1,10 +1,10 @@
 import { NextApiRequest } from "next"
 import { getLoggedInUser, spawnPrepTask } from "../../../../../../../mocks/mocks.api"
 
-export async function POST(request: NextApiRequest) {
+export async function POST(_: NextApiRequest, { params }: { params: { boardId: string; prepItemId: string } }) {
   const loggedInUser = await getLoggedInUser()
-  const boardId = request.query.boardId
-  const prepItemId = request.query.prepItemId
+  const boardId = params.boardId
+  const prepItemId = params.prepItemId
   if (!boardId || typeof boardId !== "string") {
     throw new Error("Invalid boardId")
   }

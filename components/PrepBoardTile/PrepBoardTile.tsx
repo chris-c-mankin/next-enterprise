@@ -6,7 +6,7 @@ export interface BoardTileProps {
   description?: string
 }
 
-export function BoardTile({ name, description, id }: BoardTileProps) {
+export function PrepBoardTile({ name, description, id }: BoardTileProps) {
   return (
     <Link href={`/boards/${id}`}>
       <div className="rounded-lg border border-slate-500 p-8 hover:border-slate-400">
